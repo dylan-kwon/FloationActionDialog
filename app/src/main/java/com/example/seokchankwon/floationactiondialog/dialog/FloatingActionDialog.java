@@ -467,6 +467,7 @@ public class FloatingActionDialog extends BaseDialogFragment {
 
         private ArrayList<Item> mItems;
 
+        private OnDismissListener mOnDismissListener;
         private OnItemClickListener mOnItemClickListener;
 
         public Builder(View anchorView) {
@@ -533,6 +534,11 @@ public class FloatingActionDialog extends BaseDialogFragment {
             return this;
         }
 
+        public Builder setOnDismissListener(@Nullable OnDismissListener listener) {
+            mOnDismissListener = listener;
+            return this;
+        }
+
         public Builder setOnItemClickListener(@Nullable OnItemClickListener listener) {
             mOnItemClickListener = listener;
             return this;
@@ -540,6 +546,7 @@ public class FloatingActionDialog extends BaseDialogFragment {
 
         public FloatingActionDialog build() {
             FloatingActionDialog dialog = FloatingActionDialog.newInstance(this);
+            dialog.setOnDismissListener(mOnDismissListener);
             dialog.setOnItemClickListener(mOnItemClickListener);
             return dialog;
         }

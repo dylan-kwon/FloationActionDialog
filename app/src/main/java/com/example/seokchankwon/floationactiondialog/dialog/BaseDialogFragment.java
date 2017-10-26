@@ -58,6 +58,10 @@ public abstract class BaseDialogFragment extends AppCompatDialogFragment {
         return null;
     }
 
+    public void setOnDismissListener(OnDismissListener listener) {
+        this.mOnDismissListener = listener;
+    }
+
     public interface OnDismissListener {
         void onDismiss();
     }
