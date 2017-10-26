@@ -252,8 +252,8 @@ public class FloatingActionDialog extends BaseDialogFragment {
 
             final FloatingActionDialogItemView itemView = new FloatingActionDialogItemView(mContext);
 
-            itemView.setLabelText(item.mLabel);
-            itemView.setFabImageResource(item.mImageRes);
+            itemView.setLabelText(item.getLabel());
+            itemView.setFabImageResource(item.getImageRes());
             itemView.setFabBackgroundColor(ContextCompat.getColor(mContext, mItemBackgroundColorId));
 
             itemView.setOnClickListener(new View.OnClickListener() {
@@ -553,7 +553,7 @@ public class FloatingActionDialog extends BaseDialogFragment {
 
         public String mLabel;
 
-        public Item(@DrawableRes int imageRes, String label) {
+        public Item(@DrawableRes int imageRes, @Nullable String label) {
             mImageRes = imageRes;
             mLabel = label;
         }
@@ -584,6 +584,16 @@ public class FloatingActionDialog extends BaseDialogFragment {
         public void writeToParcel(Parcel dest, int flags) {
             dest.writeInt(mImageRes);
             dest.writeString(mLabel);
+        }
+
+        @DrawableRes
+        public int getImageRes() {
+            return mImageRes;
+        }
+
+        @Nullable
+        public String getLabel() {
+            return mLabel;
         }
     }
 

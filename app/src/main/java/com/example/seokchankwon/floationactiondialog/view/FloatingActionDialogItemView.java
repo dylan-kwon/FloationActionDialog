@@ -46,7 +46,7 @@ public class FloatingActionDialogItemView extends FrameLayout {
     }
 
     private void initView(@Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.view_floating_action_dialog_item, this, false);
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.custom_floating_action_dialog_item_view, this, false);
         addView(view);
 
         fabItem = view.findViewById(R.id.fab_view_floating_action_dialog_item);
