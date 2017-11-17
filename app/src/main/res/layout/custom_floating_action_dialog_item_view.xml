@@ -7,7 +7,7 @@
     android:clipToPadding="true">
 
     <TextView
-        android:id="@+id/tv_view_floating_action_dialog_item_label"
+        android:id="@+id/tv_custom_floating_action_dialog_item_view_label"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -23,7 +23,7 @@
         tools:text="label" />
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_view_floating_action_dialog_item"
+        android:id="@+id/fab_custom_floating_action_dialog_item_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"

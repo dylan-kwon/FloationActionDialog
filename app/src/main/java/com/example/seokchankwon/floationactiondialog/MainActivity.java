@@ -2,16 +2,16 @@ package com.example.seokchankwon.floationactiondialog;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import com.example.seokchankwon.floationactiondialog.dialog.FloatingActionDialog;
-
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,16 +54,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         final FloatingActionDialog floatingActionDialog = new FloatingActionDialog.Builder(fabShowMenu)
-                .addItems(makeItems())
+                .setMenu(R.menu.menu_floating_dialog)
                 .setItemBackgroundColor(R.color.colorAccent)
                 .setCloserBackgroundColor(R.color.colorPrimary)
                 .setOnItemClickListener(new FloatingActionDialog.OnItemClickListener() {
                     @Override
-                    public void onItemClick(int position, FloatingActionDialog.Item item) {
-                        Toast.makeText(mContext,
-                                ("Position: " + position
-                                        + "\nlabel: " + item.mLabel),
-                                Toast.LENGTH_SHORT).show();
+                    public void onItemClick(@NonNull MenuItem menuItem) {
+                        Toast.makeText(mContext, menuItem.getTitle(), Toast.LENGTH_SHORT).show();
                     }
                 })
                 .build();
@@ -71,13 +68,4 @@ public class MainActivity extends AppCompatActivity {
         floatingActionDialog.show(getSupportFragmentManager(), DIALOG_TAG_FLOATING_ACTION_DIALOG);
     }
 
-    private ArrayList<FloatingActionDialog.Item> makeItems() {
-        ArrayList<FloatingActionDialog.Item> items = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            FloatingActionDialog.Item item = new FloatingActionDialog.Item(
-                    R.drawable.ic_add_white_24dp, "item" + i);
-            items.add(item);
-        }
-        return items;
-    }
 }

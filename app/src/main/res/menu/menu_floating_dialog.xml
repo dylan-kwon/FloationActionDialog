@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_floating_dialog_item_one"
+        android:icon="@drawable/ic_add_white_24dp"
+        android:orderInCategory="0"
+        android:title="@string/item1" />
+
+    <item
+        android:id="@+id/menu_floating_dialog_item_two"
+        android:icon="@drawable/ic_add_white_24dp"
+        android:orderInCategory="1"
+        android:title="@string/item2" />
+
+    <item
+        android:id="@+id/menu_floating_dialog_item_three"
+        android:icon="@drawable/ic_add_white_24dp"
+        android:orderInCategory="2"
+        android:title="@string/item3" />
+
+    <item
+        android:id="@+id/menu_floating_dialog_item_fore"
+        android:icon="@drawable/ic_add_white_24dp"
+        android:orderInCategory="3"
+        android:title="@string/item4" />
+
+    <item
+        android:id="@+id/menu_floating_dialog_item_five"
+        android:icon="@drawable/ic_add_white_24dp"
+        android:orderInCategory="4"
+        android:title="@string/item5" />
+</menu>

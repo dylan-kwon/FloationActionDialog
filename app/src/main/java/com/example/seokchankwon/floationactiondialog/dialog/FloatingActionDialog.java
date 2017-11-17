@@ -1,24 +1,25 @@
 package com.example.seokchankwon.floationactiondialog.dialog;
 
 import android.animation.Animator;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.annotation.ColorRes;
-import android.support.annotation.DrawableRes;
+import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
@@ -26,6 +27,7 @@ import android.view.ViewTreeObserver;
 import android.view.animation.AnticipateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
+import android.widget.PopupMenu;
 
 import com.example.seokchankwon.floationactiondialog.R;
 import com.example.seokchankwon.floationactiondialog.listener.SimpleAnimatorListener;
@@ -41,13 +43,14 @@ public class FloatingActionDialog extends BaseDialogFragment {
 
     public static final String EXTRA_LOCATION_X = "extra.location_x";
     public static final String EXTRA_LOCATION_Y = "extra.location_y";
-    public static final String EXTRA_ITEMS = "extra.items";
+    public static final String EXTRA_MENU_ID = "extra.menu_id";
     public static final String EXTRA_ITEM_BACKGROUND_COLOR = "extra.item_background_color";
     public static final String EXTRA_CLOSER_BACKGROUND_COLOR = "extra.closer_background_color";
     public static final String EXTRA_LABEL_ANIMATION_DURATION = "extra.label_animation_duration";
     public static final String EXTRA_SHOW_ANIMATION_DURATION = "extra.show_animation_duration";
     public static final String EXTRA_DISMISS_ANIMATION_DURATION = "extra.dismiss_animation_duration";
 
+    private int mMenuId;
     private int mLocationX;
     private int mLocationY;
     private int mItemBackgroundColorId;
@@ -56,10 +59,9 @@ public class FloatingActionDialog extends BaseDialogFragment {
     private int mDismissAnimationDuration;
     private int mLabelAnimationDuration;
 
-    private ArrayList<Item> mItems;
-    private ArrayList<FloatingActionDialogItemView> mItemViews;
+    private Menu mMenu;
 
-    private OnItemClickListener mOnItemClickListener;
+    private ArrayList<FloatingActionDialogItemView> mItemViews;
 
     private Context mContext;
 
@@ -69,28 +71,25 @@ public class FloatingActionDialog extends BaseDialogFragment {
 
     private FloatingActionButton fabClose;
 
+    private OnItemClickListener mOnItemClickListener;
+
 
     public FloatingActionDialog() {
         // newInstance를 사용
     }
 
-    private static FloatingActionDialog newInstance() {
+    private static FloatingActionDialog newInstance(@NonNull Builder builder) {
         FloatingActionDialog dialog = new FloatingActionDialog();
         Bundle bundle = new Bundle();
+        bundle.putInt(EXTRA_MENU_ID, builder.mMenuId);
+        bundle.putInt(EXTRA_LOCATION_X, builder.mLocationX);
+        bundle.putInt(EXTRA_LOCATION_Y, builder.mLocationY);
+        bundle.putInt(EXTRA_ITEM_BACKGROUND_COLOR, builder.mItemBackgroundColorId);
+        bundle.putInt(EXTRA_CLOSER_BACKGROUND_COLOR, builder.mCloserBackgroundColorId);
+        bundle.putInt(EXTRA_SHOW_ANIMATION_DURATION, builder.mShowAnimationDuration);
+        bundle.putInt(EXTRA_DISMISS_ANIMATION_DURATION, builder.mDismissAnimationDuration);
+        bundle.putInt(EXTRA_LABEL_ANIMATION_DURATION, builder.mLabelAnimationDuration);
         dialog.setArguments(bundle);
-        return dialog;
-    }
-
-    public static FloatingActionDialog newInstance(@NonNull Builder builder) {
-        FloatingActionDialog dialog = newInstance();
-        dialog.getArguments().putInt(EXTRA_LOCATION_X, builder.mLocationX);
-        dialog.getArguments().putInt(EXTRA_LOCATION_Y, builder.mLocationY);
-        dialog.getArguments().putInt(EXTRA_ITEM_BACKGROUND_COLOR, builder.mItemBackgroundColorId);
-        dialog.getArguments().putInt(EXTRA_CLOSER_BACKGROUND_COLOR, builder.mCloserBackgroundColorId);
-        dialog.getArguments().putInt(EXTRA_SHOW_ANIMATION_DURATION, builder.mShowAnimationDuration);
-        dialog.getArguments().putInt(EXTRA_DISMISS_ANIMATION_DURATION, builder.mDismissAnimationDuration);
-        dialog.getArguments().putInt(EXTRA_LABEL_ANIMATION_DURATION, builder.mLabelAnimationDuration);
-        dialog.getArguments().putParcelableArrayList(EXTRA_ITEMS, builder.mItems);
         return dialog;
     }
 
@@ -121,13 +120,29 @@ public class FloatingActionDialog extends BaseDialogFragment {
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.dialog_floating_action, container, false);
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        Activity activity = getActivity();
+
+        if (activity == null) {
+            return;
+        }
+
+        PopupMenu popupMenu = new PopupMenu(mContext, null);
+        mMenu = popupMenu.getMenu();
+
+        activity.getMenuInflater().inflate(mMenuId, mMenu);
+
+        if (mMenu.size() > 5) {
+            throw new IndexOutOfBoundsException("menuItem의 개수는 최대 5개 까지만 가능하다.");
+        }
+
         initView(getView());
 
         fabClose.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -146,7 +161,7 @@ public class FloatingActionDialog extends BaseDialogFragment {
                     public boolean onPreDraw() {
                         flItemContainer.getViewTreeObserver().removeOnPreDrawListener(this);
 
-                        makeItemView(mItems);
+                        makeItemView();
                         showAnimation();
 
                         return false;
@@ -188,6 +203,7 @@ public class FloatingActionDialog extends BaseDialogFragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putInt(EXTRA_MENU_ID, mMenuId);
         outState.putInt(EXTRA_LOCATION_X, mLocationX);
         outState.putInt(EXTRA_LOCATION_Y, mLocationY);
         outState.putInt(EXTRA_ITEM_BACKGROUND_COLOR, mItemBackgroundColorId);
@@ -195,11 +211,11 @@ public class FloatingActionDialog extends BaseDialogFragment {
         outState.putInt(EXTRA_SHOW_ANIMATION_DURATION, mShowAnimationDuration);
         outState.putInt(EXTRA_DISMISS_ANIMATION_DURATION, mDismissAnimationDuration);
         outState.putInt(EXTRA_LABEL_ANIMATION_DURATION, mLabelAnimationDuration);
-        outState.putParcelableArrayList(EXTRA_SHOW_ANIMATION_DURATION, mItems);
     }
 
     private void setupInstanceState(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
+            mMenuId = savedInstanceState.getInt(EXTRA_MENU_ID);
             mLocationX = savedInstanceState.getInt(EXTRA_LOCATION_X);
             mLocationY = savedInstanceState.getInt(EXTRA_LOCATION_Y);
             mItemBackgroundColorId = savedInstanceState.getInt(EXTRA_ITEM_BACKGROUND_COLOR);
@@ -207,9 +223,9 @@ public class FloatingActionDialog extends BaseDialogFragment {
             mShowAnimationDuration = savedInstanceState.getInt(EXTRA_SHOW_ANIMATION_DURATION);
             mDismissAnimationDuration = savedInstanceState.getInt(EXTRA_DISMISS_ANIMATION_DURATION);
             mLabelAnimationDuration = savedInstanceState.getInt(EXTRA_LABEL_ANIMATION_DURATION);
-            mItems = savedInstanceState.getParcelableArrayList(EXTRA_ITEMS);
 
-        } else {
+        } else if (getArguments() != null) {
+            mMenuId = getArguments().getInt(EXTRA_MENU_ID);
             mLocationX = getArguments().getInt(EXTRA_LOCATION_X);
             mLocationY = getArguments().getInt(EXTRA_LOCATION_Y);
             mItemBackgroundColorId = getArguments().getInt(EXTRA_ITEM_BACKGROUND_COLOR);
@@ -217,11 +233,6 @@ public class FloatingActionDialog extends BaseDialogFragment {
             mShowAnimationDuration = getArguments().getInt(EXTRA_SHOW_ANIMATION_DURATION);
             mDismissAnimationDuration = getArguments().getInt(EXTRA_DISMISS_ANIMATION_DURATION);
             mLabelAnimationDuration = getArguments().getInt(EXTRA_LABEL_ANIMATION_DURATION);
-            mItems = getArguments().getParcelableArrayList(EXTRA_ITEMS);
-        }
-
-        if (mItems == null) {
-            mItems = new ArrayList<>();
         }
     }
 
@@ -231,37 +242,57 @@ public class FloatingActionDialog extends BaseDialogFragment {
         fabClose = view.findViewById(R.id.fab_dialog_floating_action_close);
     }
 
-    public int getItemCount() {
-        return mItems.size();
+    @NonNull
+    public Menu getMenu() {
+        return mMenu;
     }
 
-    public int getItemViewCount() {
-        return mItemViews.size();
+    @NonNull
+    public MenuItem getMenuItem(int index) {
+        return mMenu.getItem(index);
     }
 
-    private void makeItemView(@Nullable ArrayList<Item> items) {
-        if (items == null) {
-            return;
-        }
+    public int getMenuSize() {
+        return mMenu.size();
+    }
 
-        final int size = getItemCount();
+    @NonNull
+    private ArrayList<FloatingActionDialogItemView> getItemViews() {
+        return mItemViews;
+    }
 
-        for (int i = 0; i < size; i++) {
-            final int itemPosition = i;
-            final Item item = mItems.get(i);
+    @NonNull
+    private FloatingActionDialogItemView getItemView(int itemPosition) {
+        return mItemViews.get(itemPosition);
+    }
+
+    private void makeItemView() {
+        final int size = getMenuSize();
+
+        for (int i = (size - 1); i >= 0; i--) {
+            final MenuItem menuItem = getMenuItem(i);
 
             final FloatingActionDialogItemView itemView = new FloatingActionDialogItemView(mContext);
 
-            itemView.setLabelText(item.getLabel());
-            itemView.setFabImageResource(item.getImageRes());
+            String itemTitle = String.valueOf(menuItem.getTitle());
+            Drawable itemIcon = menuItem.getIcon();
+
+            itemView.setLabelText(itemTitle);
+            itemView.setFabImageResource(itemIcon);
             itemView.setFabBackgroundColor(ContextCompat.getColor(mContext, mItemBackgroundColorId));
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (mOnItemClickListener != null) {
-                        mOnItemClickListener.onItemClick(itemPosition, item);
-                    }
+                    dismissAnimation(new OnAnimationEndCallback() {
+                        @Override
+                        public void onAnimationEnd() {
+                            if (mOnItemClickListener != null) {
+                                mOnItemClickListener.onItemClick(menuItem);
+                            }
+                            dismiss();
+                        }
+                    });
                 }
             });
 
@@ -271,7 +302,7 @@ public class FloatingActionDialog extends BaseDialogFragment {
             flItemContainer.addView(itemView, lp);
             mItemViews.add(itemView);
 
-            if (i != size - 1) {
+            if (i != 0) {
                 continue;
             }
 
@@ -296,16 +327,6 @@ public class FloatingActionDialog extends BaseDialogFragment {
         }
     }
 
-    @Nullable
-    public FloatingActionDialogItemView getItemView(int itemPosition) {
-        return mItemViews.get(itemPosition);
-    }
-
-    @Nullable
-    public ArrayList<FloatingActionDialogItemView> getItemViews() {
-        return mItemViews;
-    }
-
     private void showAnimation() {
         // 닫기 버튼 왼쪽으로 45도 회전 (x 모양이 되도록 회전)
         fabClose.animate()
@@ -313,16 +334,12 @@ public class FloatingActionDialog extends BaseDialogFragment {
                 .setDuration(mShowAnimationDuration)
                 .start();
 
-        final int itemCount = getItemViewCount();
+        final int itemCount = getMenuSize();
         final int[] translationY = {fabClose.getHeight()};
 
         // 아이템의 개수만큼 반복
         for (int i = 0; i < itemCount; i++) {
             final FloatingActionDialogItemView itemView = getItemView(i);
-
-            if (itemView == null) {
-                return;
-            }
 
             // 뷰가 그려질 때까지 기다림
             itemView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -352,16 +369,12 @@ public class FloatingActionDialog extends BaseDialogFragment {
                 .setDuration(mDismissAnimationDuration)
                 .start();
 
-        final int itemCount = getItemViewCount();
+        final int itemCount = getMenuSize();
 
         // 아이템의 개수만큼 반복
         for (int i = itemCount - 1; i >= 0; i--) {
             final int tempI = i;
             final FloatingActionDialogItemView itemView = getItemView(i);
-
-            if (itemView == null) {
-                return;
-            }
 
             // 뷰가 그려질 때까지 기다림
             itemView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -397,7 +410,6 @@ public class FloatingActionDialog extends BaseDialogFragment {
     }
 
     private void itemViewTranslateYAnimation(@NonNull final FloatingActionDialogItemView itemView, final int translationY, @Nullable final OnAnimationEndCallback callback) {
-        Log.e("test", "test1");
         ViewPropertyAnimator animator = itemView.animate();
 
         animator.translationY(-translationY);
@@ -429,7 +441,6 @@ public class FloatingActionDialog extends BaseDialogFragment {
     }
 
     private void labelAlphaAnimation(@NonNull final FloatingActionDialogItemView itemView, float alpha, @Nullable final OnAnimationEndCallback callback) {
-        Log.e("test", "test2");
         itemView.getTvLabel().animate()
                 .alpha(alpha)
                 .setDuration(mLabelAnimationDuration)
@@ -453,9 +464,7 @@ public class FloatingActionDialog extends BaseDialogFragment {
         mOnItemClickListener = listener;
     }
 
-    public static class Builder {
-
-        private int MAXIMUM_ITEM_COUNT = 5;
+    public static class Builder extends BaseDialogFragment.Builder<Builder, FloatingActionDialog> {
 
         private int mLocationX;
         private int mLocationY;
@@ -465,9 +474,8 @@ public class FloatingActionDialog extends BaseDialogFragment {
         private int mDismissAnimationDuration;
         private int mLabelAnimationDuration;
 
-        private ArrayList<Item> mItems;
+        private int mMenuId;
 
-        private OnDismissListener mOnDismissListener;
         private OnItemClickListener mOnItemClickListener;
 
         public Builder(View anchorView) {
@@ -483,8 +491,11 @@ public class FloatingActionDialog extends BaseDialogFragment {
             mShowAnimationDuration = 300;
             mDismissAnimationDuration = 200;
             mLabelAnimationDuration = 150;
+        }
 
-            mItems = new ArrayList<>();
+        public Builder setMenu(@MenuRes int menuId) {
+            mMenuId = menuId;
+            return this;
         }
 
         public Builder setShowAnimationDuration(int duration) {
@@ -502,40 +513,13 @@ public class FloatingActionDialog extends BaseDialogFragment {
             return this;
         }
 
-        public Builder addItem(@Nullable Item item) {
-            if (item == null) {
-                return this;
-            }
-            if (mItems.size() >= MAXIMUM_ITEM_COUNT) {
-                throw new IndexOutOfBoundsException("FloatingActionDialog의 아이템은 최대 5개까지 가능합니다!!");
-            }
-            mItems.add(item);
+        public Builder setItemBackgroundColor(@ColorRes int resId) {
+            mItemBackgroundColorId = resId;
             return this;
         }
 
-        public Builder addItems(@Nullable ArrayList<Item> items) {
-            if (items == null) {
-                return this;
-            }
-            if (items.size() > MAXIMUM_ITEM_COUNT) {
-                throw new IndexOutOfBoundsException("FloatingActionDialog의 아이템은 최대 5개까지 가능합니다!!");
-            }
-            mItems.addAll(items);
-            return this;
-        }
-
-        public Builder setItemBackgroundColor(@ColorRes int id) {
-            mItemBackgroundColorId = id;
-            return this;
-        }
-
-        public Builder setCloserBackgroundColor(@ColorRes int id) {
-            mCloserBackgroundColorId = id;
-            return this;
-        }
-
-        public Builder setOnDismissListener(@Nullable OnDismissListener listener) {
-            mOnDismissListener = listener;
+        public Builder setCloserBackgroundColor(@ColorRes int resId) {
+            mCloserBackgroundColorId = resId;
             return this;
         }
 
@@ -544,68 +528,18 @@ public class FloatingActionDialog extends BaseDialogFragment {
             return this;
         }
 
+        @NonNull
+        @Override
         public FloatingActionDialog build() {
             FloatingActionDialog dialog = FloatingActionDialog.newInstance(this);
-            dialog.setOnDismissListener(mOnDismissListener);
             dialog.setOnItemClickListener(mOnItemClickListener);
+            setDialogState(dialog);
             return dialog;
-        }
-
-    }
-
-    public static class Item implements Parcelable {
-
-        @DrawableRes
-        public int mImageRes;
-
-        public String mLabel;
-
-        public Item(@DrawableRes int imageRes, @Nullable String label) {
-            mImageRes = imageRes;
-            mLabel = label;
-        }
-
-        protected Item(Parcel in) {
-            mImageRes = in.readInt();
-            mLabel = in.readString();
-        }
-
-        public static final Creator<Item> CREATOR = new Creator<Item>() {
-            @Override
-            public Item createFromParcel(Parcel in) {
-                return new Item(in);
-            }
-
-            @Override
-            public Item[] newArray(int size) {
-                return new Item[size];
-            }
-        };
-
-        @Override
-        public int describeContents() {
-            return 0;
-        }
-
-        @Override
-        public void writeToParcel(Parcel dest, int flags) {
-            dest.writeInt(mImageRes);
-            dest.writeString(mLabel);
-        }
-
-        @DrawableRes
-        public int getImageRes() {
-            return mImageRes;
-        }
-
-        @Nullable
-        public String getLabel() {
-            return mLabel;
         }
     }
 
     public interface OnItemClickListener {
-        void onItemClick(int position, Item item);
+        void onItemClick(@NonNull MenuItem menuItem);
     }
 
     public interface OnAnimationEndCallback {

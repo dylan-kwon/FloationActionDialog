@@ -49,30 +49,32 @@ public class FloatingActionDialogItemView extends FrameLayout {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.custom_floating_action_dialog_item_view, this, false);
         addView(view);
 
-        fabItem = view.findViewById(R.id.fab_view_floating_action_dialog_item);
-        tvItemLabel = view.findViewById(R.id.tv_view_floating_action_dialog_item_label);
+        fabItem = view.findViewById(R.id.fab_custom_floating_action_dialog_item_view);
+        tvItemLabel = view.findViewById(R.id.tv_custom_floating_action_dialog_item_view_label);
 
         setViewData(attrs, defStyleAttr);
     }
 
     private void setViewData(@Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
         TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.FloatingActionDialogItemView, defStyleAttr, 0);
+        try {
+            int fabSrc = typedArray.getResourceId(R.styleable.FloatingActionDialogItemView_fabSrc, 0);
+            int fabBackground = typedArray.getColor(R.styleable.FloatingActionDialogItemView_fabBackground, ContextCompat.getColor(getContext(), R.color.colorAccent));
 
-        int fabSrc = typedArray.getResourceId(R.styleable.FloatingActionDialogItemView_fabSrc, 0);
-        int fabBackground = typedArray.getColor(R.styleable.FloatingActionDialogItemView_fabBackground, ContextCompat.getColor(getContext(), R.color.colorAccent));
+            setFabImageResource(fabSrc);
+            setFabBackgroundColor(fabBackground);
 
-        setFabImageResource(fabSrc);
-        setFabBackgroundColor(fabBackground);
+            String labelText = typedArray.getString(R.styleable.FloatingActionDialogItemView_label);
+            float labelTextSize = typedArray.getDimensionPixelSize(R.styleable.FloatingActionDialogItemView_labelTextSize, getResources().getDimensionPixelSize(R.dimen.dim_14dp));
+            int labelTextColor = typedArray.getColor(R.styleable.FloatingActionDialogItemView_labelTextColor, ContextCompat.getColor(getContext(), R.color.color_ffffff));
 
-        String labelText = typedArray.getString(R.styleable.FloatingActionDialogItemView_label);
-        float labelTextSize = typedArray.getDimension(R.styleable.FloatingActionDialogItemView_labelTextSize, getResources().getDimensionPixelSize(R.dimen.dim_14dp));
-        int labelTextColor = typedArray.getColor(R.styleable.FloatingActionDialogItemView_labelTextColor, ContextCompat.getColor(getContext(), R.color.color_ffffff));
+            setLabelText(labelText);
+            setLabelTextSize(labelTextSize);
+            setLabelTextColor(labelTextColor);
 
-        setLabelText(labelText);
-        setLabelTextSize(labelTextSize);
-        setLabelTextColor(labelTextColor);
-
-        typedArray.recycle();
+        } finally {
+            typedArray.recycle();
+        }
     }
 
     public FloatingActionButton getFab() {
@@ -86,6 +88,10 @@ public class FloatingActionDialogItemView extends FrameLayout {
     @Nullable
     public Drawable getFabSrc() {
         return fabItem.getDrawable();
+    }
+
+    public void setFabImageResource(@NonNull Drawable drawable) {
+        fabItem.setImageDrawable(drawable);
     }
 
     public void setFabImageResource(@DrawableRes int imageResource) {
