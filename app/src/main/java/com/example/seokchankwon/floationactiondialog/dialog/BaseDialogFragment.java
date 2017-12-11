@@ -37,7 +37,6 @@ public abstract class BaseDialogFragment extends AppCompatDialogFragment {
 
     private OnDismissListener mOnDismissListener;
 
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,8 +44,15 @@ public abstract class BaseDialogFragment extends AppCompatDialogFragment {
     }
 
     @Override
+    @NonNull
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        return new BaseAppcompatDialog(getContext(), getTheme());
+    }
+
+    @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
         Window window = getWindow();
 
         if (window != null) {
@@ -195,14 +201,14 @@ public abstract class BaseDialogFragment extends AppCompatDialogFragment {
         }
     }
 
-    protected static abstract class Builder<T extends Builder, S extends BaseDialogFragment> {
+    protected static abstract class Builder<Builder extends BaseDialogFragment.Builder, Dialog extends BaseDialogFragment> {
 
-        private int mGravity;
-        private float mDimAmount;
+        protected int mGravity;
+        protected float mDimAmount;
 
-        private boolean mCancelable;
+        protected boolean mCancelable;
 
-        private OnDismissListener mOnDismissListener;
+        protected OnDismissListener mOnDismissListener;
 
         public Builder() {
             mGravity = Gravity.CENTER;
@@ -213,33 +219,33 @@ public abstract class BaseDialogFragment extends AppCompatDialogFragment {
 
         @SuppressWarnings("unchecked")
         @NonNull
-        public T setGravity(@DialogGravity int gravity) {
+        public Builder setGravity(@DialogGravity int gravity) {
             mGravity = gravity;
-            return (T) this;
+            return (Builder) this;
         }
 
         @SuppressWarnings("unchecked")
         @NonNull
-        public T setDimAmount(float dimAmount) {
+        public Builder setDimAmount(float dimAmount) {
             mDimAmount = dimAmount;
-            return (T) this;
+            return (Builder) this;
         }
 
         @SuppressWarnings("unchecked")
         @NonNull
-        public T setCancelable(boolean cancelable) {
+        public Builder setCancelable(boolean cancelable) {
             mCancelable = cancelable;
-            return (T) this;
+            return (Builder) this;
         }
 
         @SuppressWarnings("unchecked")
         @NonNull
-        public T setOnDismissListener(@Nullable OnDismissListener listener) {
+        public Builder setOnDismissListener(@Nullable OnDismissListener listener) {
             mOnDismissListener = listener;
-            return (T) this;
+            return (Builder) this;
         }
 
-        protected void setDialogState(@NonNull S dialog) {
+        protected void setDialogState(@NonNull Dialog dialog) {
             dialog.setGravity(mGravity);
             dialog.setDimAmount(mDimAmount);
             dialog.setCancelable(mCancelable);
@@ -247,7 +253,7 @@ public abstract class BaseDialogFragment extends AppCompatDialogFragment {
         }
 
         @NonNull
-        public abstract S build();
+        public abstract Dialog build();
 
     }
 

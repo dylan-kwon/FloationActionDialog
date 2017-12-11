@@ -50,6 +50,8 @@ public class FloatingActionDialog extends BaseDialogFragment {
     public static final String EXTRA_SHOW_ANIMATION_DURATION = "extra.show_animation_duration";
     public static final String EXTRA_DISMISS_ANIMATION_DURATION = "extra.dismiss_animation_duration";
 
+    public static final int MAX_ITEM_COUNT = 5;
+
     private int mMenuId;
     private int mLocationX;
     private int mLocationY;
@@ -72,6 +74,8 @@ public class FloatingActionDialog extends BaseDialogFragment {
     private FloatingActionButton fabClose;
 
     private OnItemClickListener mOnItemClickListener;
+
+    private Handler mHandler = new Handler();
 
 
     public FloatingActionDialog() {
@@ -108,12 +112,7 @@ public class FloatingActionDialog extends BaseDialogFragment {
         return new BaseAppcompatDialog(getContext(), getTheme()) {
             @Override
             public void onBackPressed() {
-                dismissAnimation(new OnAnimationEndCallback() {
-                    @Override
-                    public void onAnimationEnd() {
-                        dismiss();
-                    }
-                });
+                dismissAnimation(this::dismiss);
             }
         };
     }
@@ -139,8 +138,9 @@ public class FloatingActionDialog extends BaseDialogFragment {
 
         activity.getMenuInflater().inflate(mMenuId, mMenu);
 
-        if (mMenu.size() > 5) {
-            throw new IndexOutOfBoundsException("menuItem의 개수는 최대 5개 까지만 가능하다.");
+        if (mMenu.size() > MAX_ITEM_COUNT) {
+            throw new IndexOutOfBoundsException(
+                    "menuItem의 개수는 최대 " + MAX_ITEM_COUNT + "개 까지만 가능하다.");
         }
 
         initView(getView());
@@ -172,30 +172,14 @@ public class FloatingActionDialog extends BaseDialogFragment {
             }
         });
 
-        fabClose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismissAnimation(new OnAnimationEndCallback() {
-                    @Override
-                    public void onAnimationEnd() {
-                        dismiss();
-                    }
-                });
-                fabClose.setEnabled(false);
-            }
+        fabClose.setOnClickListener(v -> {
+            dismissAnimation(this::dismiss);
+            fabClose.setEnabled(false);
         });
 
-        clBackground.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismissAnimation(new OnAnimationEndCallback() {
-                    @Override
-                    public void onAnimationEnd() {
-                        dismiss();
-                    }
-                });
-                clBackground.setEnabled(false);
-            }
+        clBackground.setOnClickListener(v -> {
+            dismissAnimation(this::dismiss);
+            clBackground.setEnabled(false);
         });
 
     }
@@ -281,20 +265,12 @@ public class FloatingActionDialog extends BaseDialogFragment {
             itemView.setFabImageResource(itemIcon);
             itemView.setFabBackgroundColor(ContextCompat.getColor(mContext, mItemBackgroundColorId));
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dismissAnimation(new OnAnimationEndCallback() {
-                        @Override
-                        public void onAnimationEnd() {
-                            if (mOnItemClickListener != null) {
-                                mOnItemClickListener.onItemClick(menuItem);
-                            }
-                            dismiss();
-                        }
-                    });
+            itemView.setOnClickListener(v -> dismissAnimation(() -> {
+                if (mOnItemClickListener != null) {
+                    mOnItemClickListener.onItemClick(menuItem);
                 }
-            });
+                dismiss();
+            }));
 
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.RIGHT);
@@ -348,12 +324,9 @@ public class FloatingActionDialog extends BaseDialogFragment {
                     itemView.getViewTreeObserver().removeOnPreDrawListener(this);
 
                     // 아이템뷰를 간격에 맞게 위로 이동 애니메이션 시작
-                    itemViewTranslateYAnimation(itemView, translationY[0], new OnAnimationEndCallback() {
-                        @Override
-                        public void onAnimationEnd() {
-                            // 아이템뷰 이동 애니메이션이 끝나면 라벨 나타나기 애니메이션 시작
-                            labelAlphaAnimation(itemView, 1.0f, null);
-                        }
+                    itemViewTranslateYAnimation(itemView, translationY[0], () -> {
+                        // 아이템뷰 이동 애니메이션이 끝나면 라벨 나타나기 애니메이션 시작
+                        labelAlphaAnimation(itemView, 1.0f, null);
                     });
                     translationY[0] += itemView.getHeight();
                     return false;
@@ -383,25 +356,16 @@ public class FloatingActionDialog extends BaseDialogFragment {
                     itemView.getViewTreeObserver().removeOnPreDrawListener(this);
 
                     // 라벨 감추기 애니메이션 시작
-                    labelAlphaAnimation(itemView, 0.0f, new OnAnimationEndCallback() {
-                        @Override
-                        public void onAnimationEnd() {
-                            // 라벨 감추기 애니메이션이 끝나면 아이템뷰 원위치 애니메이션 시작
-                            itemViewTranslateYAnimation(itemView, 0, new OnAnimationEndCallback() {
-                                @Override
-                                public void onAnimationEnd() {
-                                    // 처음의 (반복문 마지막) 아이템뷰 원위치 애니메이션이 끝나면 콜백 호출
-                                    if (tempI == 0) {
-                                        mHandler.postDelayed(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                callback.onAnimationEnd();
-                                            }
-                                        }, mDismissAnimationDuration);
-                                    }
-                                }
-                            });
-                        }
+                    labelAlphaAnimation(itemView, 0.0f, () -> {
+
+                        // 라벨 감추기 애니메이션이 끝나면 아이템뷰 원위치 애니메이션 시작
+                        itemViewTranslateYAnimation(itemView, 0, () -> {
+
+                            // 처음의 (반복문 마지막) 아이템뷰 원위치 애니메이션이 끝나면 콜백 호출
+                            if (tempI == 0) {
+                                mHandler.postDelayed(callback::onAnimationEnd, mDismissAnimationDuration);
+                            }
+                        });
                     });
                     return false;
                 }
@@ -458,10 +422,13 @@ public class FloatingActionDialog extends BaseDialogFragment {
                 .start();
     }
 
-    Handler mHandler = new Handler();
-
     public void setOnItemClickListener(@Nullable OnItemClickListener listener) {
         mOnItemClickListener = listener;
+    }
+
+    public static int getStatusBarSize(Context context) {
+        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        return context.getResources().getDimensionPixelSize(resourceId);
     }
 
     public static class Builder extends BaseDialogFragment.Builder<Builder, FloatingActionDialog> {
@@ -546,8 +513,4 @@ public class FloatingActionDialog extends BaseDialogFragment {
         void onAnimationEnd();
     }
 
-    public static int getStatusBarSize(Context context) {
-        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
-        return context.getResources().getDimensionPixelSize(resourceId);
-    }
 }
