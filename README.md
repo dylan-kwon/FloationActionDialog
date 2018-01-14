@@ -1,5 +1,9 @@
-FloatingActionDialog
-====================
+What is FloatingActionDialog?
+=============================
+An example of implementing a FloatingActionDialog using a DilalogFragment.
+It does not provide many custom functions because it was created to protect code reuse and tone and manners within a project.
+
+<br/>
 
 Preview
 -------
